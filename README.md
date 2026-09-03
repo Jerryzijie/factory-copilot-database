@@ -31,8 +31,12 @@ SQLdb/
 |   |-- production_log.csv
 |   `-- workshops.csv
 |-- docs/
+|   |-- database_guide.md
 |   `-- field_mapping.md
 |-- evidence/
+|   |-- 04_validate.txt
+|   |-- 05_admin_permission_test.txt
+|   |-- 06_readonly_permission_test.txt
 |   `-- README.md
 |-- sql/
 |   |-- 01_roles_and_database.sql
@@ -358,6 +362,10 @@ Do not delete existing roles, databases, schemas or tables only to resolve an `a
 ## Documentation and acceptance evidence
 
 The current field mapping is available in [docs/field_mapping.md](docs/field_mapping.md).
+
+The database connection guide, table and field descriptions, common query examples, role boundaries and security notes are available in [docs/database_guide.md](docs/database_guide.md).
+
+The acceptance evidence index and verified command outputs are available in [evidence/README.md](evidence/README.md).
 
 Additional database documentation should be stored in `docs/`. Acceptance outputs and supporting materials should be stored in `evidence/`. The teammate responsible for documentation and evidence can organise these files and add an evidence index.
 
