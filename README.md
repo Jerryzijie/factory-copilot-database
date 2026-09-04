@@ -323,18 +323,26 @@ The positive read test should return:
 readable_order_rows = 120
 ```
 
-The following errors are expected and prove that the Agent is read-only:
+The six dangerous operations are tested with explicit PostgreSQL exception handling. Expected `insufficient_privilege` errors are caught and reported as successful negative-test results.
+
+A correct run should contain:
 
 ```text
-INSERT:       permission denied for table production_log
-UPDATE:       permission denied for table orders
-DELETE:       permission denied for table orders
-TRUNCATE:     permission denied for table production_log
-CREATE TABLE: permission denied for schema app
-DROP TABLE:   must be owner of table orders
+TEST PASSED: INSERT was denied
+TEST PASSED: UPDATE was denied
+TEST PASSED: DELETE was denied
+TEST PASSED: TRUNCATE was denied
+TEST PASSED: CREATE TABLE was denied
+TEST PASSED: DROP TABLE was denied
+=== All six permission-denial tests passed ===
 ```
 
-The file name, line number and output language may vary. The permission error itself is the important result.
+If any dangerous operation unexpectedly succeeds, the script raises an error such as:
+
+```text
+TEST FAILED: INSERT unexpectedly succeeded
+```
+Because `ON_ERROR_STOP` remains enabled, an unexpected success or any unrelated SQL error stops the script and produces a non-zero exit status.
 
 The final integrity check should return:
 
@@ -346,7 +354,17 @@ production_log | 360
 workshops      | 8
 ```
 
-Step 6 passes when `factory_agent` can read all three tables, all six dangerous operations are rejected and the final row counts remain unchanged.
+The final integrity query confirms that the permission tests left no persistent changes. The unchanged row counts are safety evidence, but do not by themselves prove that the write operations were denied. The explicit six `TEST PASSED` messages are the behavioural permission evidence.
+
+Step 6 passes only when:
+
+1. the connected user is `factory_agent`;
+2. `SELECT` succeeds on all three tables;
+3. the declared write permissions are all `f`;
+4. all six explicit `TEST PASSED` messages appear;
+5. no `TEST FAILED` or unexpected `ERROR` appears;
+6. the final row counts match the validation results.
+
 
 ## Rerunning the SQL files
 
@@ -366,6 +384,8 @@ The current field mapping is available in [docs/field_mapping.md](docs/field_map
 The database connection guide, table and field descriptions, common query examples, role boundaries and security notes are available in [docs/database_guide.md](docs/database_guide.md).
 
 The acceptance evidence index and verified command outputs are available in [evidence/README.md](evidence/README.md).
+
+The commands in Steps 4-6 display validation results without rewriting the tracked evidence files. To regenerate the three evidence files as reviewable UTF-8 text, follow the PowerShell instructions in [evidence/README.md](evidence/README.md#regenerating-the-evidence).
 
 Additional database documentation should be stored in `docs/`. Acceptance outputs and supporting materials should be stored in `evidence/`. The teammate responsible for documentation and evidence can organise these files and add an evidence index.
 

@@ -65,113 +65,134 @@ FROM app.orders;
 
 
 \echo === Negative test: INSERT must fail ===
-\set ON_ERROR_STOP off
 
-BEGIN;
+DO $permission_test$
+BEGIN
+    BEGIN
+        INSERT INTO app.production_log (
+            production_date,
+            stage,
+            pieces_completed
+        )
+        VALUES (
+            DATE '2999-01-01',
+            'KNITTING',
+            0
+        );
 
-SAVEPOINT test_insert;
+        RAISE EXCEPTION
+            'TEST FAILED: INSERT unexpectedly succeeded';
 
-INSERT INTO app.production_log (
-    production_date,
-    stage,
-    pieces_completed
-)
-VALUES (
-    DATE '2999-01-01',
-    'KNITTING',
-    0
-);
-
-ROLLBACK TO SAVEPOINT test_insert;
-
-ROLLBACK;
-
-\set ON_ERROR_STOP on
+    EXCEPTION
+        WHEN insufficient_privilege THEN
+            RAISE NOTICE
+                'TEST PASSED: INSERT was denied';
+    END;
+END
+$permission_test$;
 
 
 \echo === Negative test: UPDATE must fail ===
-\set ON_ERROR_STOP off
 
-BEGIN;
+DO $permission_test$
+BEGIN
+    BEGIN
+        UPDATE app.orders
+        SET pieces = pieces
+        WHERE order_id = 'ORD-001';
 
-SAVEPOINT test_update;
+        RAISE EXCEPTION
+            'TEST FAILED: UPDATE unexpectedly succeeded';
 
-UPDATE app.orders
-SET pieces = pieces
-WHERE order_id = 'ORD-001';
-
-ROLLBACK TO SAVEPOINT test_update;
-
-ROLLBACK;
-
-\set ON_ERROR_STOP on
+    EXCEPTION
+        WHEN insufficient_privilege THEN
+            RAISE NOTICE
+                'TEST PASSED: UPDATE was denied';
+    END;
+END
+$permission_test$;
 
 
 \echo === Negative test: DELETE must fail ===
-\set ON_ERROR_STOP off
 
-BEGIN;
+DO $permission_test$
+BEGIN
+    BEGIN
+        DELETE FROM app.orders
+        WHERE order_id = 'ORD-001';
 
-SAVEPOINT test_delete;
+        RAISE EXCEPTION
+            'TEST FAILED: DELETE unexpectedly succeeded';
 
-DELETE FROM app.orders
-WHERE order_id = 'ORD-001';
-
-ROLLBACK TO SAVEPOINT test_delete;
-
-ROLLBACK;
-
-\set ON_ERROR_STOP on
+    EXCEPTION
+        WHEN insufficient_privilege THEN
+            RAISE NOTICE
+                'TEST PASSED: DELETE was denied';
+    END;
+END
+$permission_test$;
 
 
 \echo === Negative test: TRUNCATE must fail ===
-\set ON_ERROR_STOP off
 
-BEGIN;
+DO $permission_test$
+BEGIN
+    BEGIN
+        TRUNCATE TABLE app.production_log;
 
-SAVEPOINT test_truncate;
+        RAISE EXCEPTION
+            'TEST FAILED: TRUNCATE unexpectedly succeeded';
 
-TRUNCATE TABLE app.production_log;
-
-ROLLBACK TO SAVEPOINT test_truncate;
-
-ROLLBACK;
-
-\set ON_ERROR_STOP on
+    EXCEPTION
+        WHEN insufficient_privilege THEN
+            RAISE NOTICE
+                'TEST PASSED: TRUNCATE was denied';
+    END;
+END
+$permission_test$;
 
 
 \echo === Negative test: CREATE TABLE must fail ===
-\set ON_ERROR_STOP off
 
-BEGIN;
+DO $permission_test$
+BEGIN
+    BEGIN
+        CREATE TABLE app.agent_should_not_create (
+            id integer
+        );
 
-SAVEPOINT test_create;
+        RAISE EXCEPTION
+            'TEST FAILED: CREATE TABLE unexpectedly succeeded';
 
-CREATE TABLE app.agent_should_not_create (
-    id integer
-);
-
-ROLLBACK TO SAVEPOINT test_create;
-
-ROLLBACK;
-
-\set ON_ERROR_STOP on
+    EXCEPTION
+        WHEN insufficient_privilege THEN
+            RAISE NOTICE
+                'TEST PASSED: CREATE TABLE was denied';
+    END;
+END
+$permission_test$;
 
 
 \echo === Negative test: DROP TABLE must fail ===
-\set ON_ERROR_STOP off
 
-BEGIN;
+DO $permission_test$
+BEGIN
+    BEGIN
+        DROP TABLE app.orders;
 
-SAVEPOINT test_drop;
+        RAISE EXCEPTION
+            'TEST FAILED: DROP TABLE unexpectedly succeeded';
 
-DROP TABLE app.orders;
+    EXCEPTION
+        WHEN insufficient_privilege THEN
+            RAISE NOTICE
+                'TEST PASSED: DROP TABLE was denied';
+    END;
+END
+$permission_test$;
 
-ROLLBACK TO SAVEPOINT test_drop;
 
-ROLLBACK;
-
-\set ON_ERROR_STOP on
+\echo === All six permission-denial tests passed ===
 
 
 \echo === Final integrity check ===
